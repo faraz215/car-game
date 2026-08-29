@@ -280,7 +280,7 @@ const scoreText =
 
 const gameOver =
   document.getEl
-    ementById("gameOver");
+  ementById("gameOver");
 
 const finalScore =
   document.getElementById("finalScore");
@@ -559,6 +559,131 @@ lastTime =
 
 requestAnimationFrame(gameLoop);
 
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بازی ماشین</title>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #555;
+      font-family: Arial;
+    }
+
+    #road {
+      width: 100vw;
+      height: 100vh;
+      background: #333;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #car {
+      position: absolute;
+      width: 60px;
+      height: 100px;
+      background: red;
+      border-radius: 12px;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+    }
+
+    .wheel {
+      position: absolute;
+      width: 12px;
+      height: 25px;
+      background: black;
+      border-radius: 5px;
+    }
+
+    .w1 { left: -8px; top: 15px; }
+    .w2 { right: -8px; top: 15px; }
+    .w3 { left: -8px; bottom: 15px; }
+    .w4 { right: -8px; bottom: 15px; }
+
+    #info {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: #0008;
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 10;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="info">
+  🚗 ماشین<br>
+  ← → حرکت
+</div>
+
+<div id="road">
+  <div id="car">
+    <div class="wheel w1"></div>
+    <div class="wheel w2"></div>
+    <div class="wheel w3"></div>
+    <div class="wheel w4"></div>
+  </div>
+</div>
+
+<script>
+  const car = document.getElementById("car");
+
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight - 140;
+
+  const keys = {};
+
+  document.addEventListener("keydown", function(event) {
+    keys[event.key] = true;
+  });
+
+  document.addEventListener("keyup", function(event) {
+    keys[event.key] = false;
+  });
+
+  function moveCar() {
+
+    if (keys["ArrowLeft"] || keys["a"]) {
+      x -= 6;
+    }
+
+    if (keys["ArrowRight"] || keys["d"]) {
+      x += 6;
+    }
+
+    if (keys["ArrowUp"] || keys["w"]) {
+      y -= 6;
+    }
+
+    if (keys["ArrowDown"] || keys["s"]) {
+      y += 6;
+    }
+
+    x = Math.max(35, Math.min(window.innerWidth - 35, x));
+    y = Math.max(60, Math.min(window.innerHeight - 50, y));
+
+    car.style.left = x + "px";
+    car.style.top = y + "px";
+    car.style.bottom = "auto";
+
+    requestAnimationFrame(moveCar);
+  }
+
+  moveCar();
 </script>
 
 </body>
