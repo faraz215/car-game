@@ -1,121 +1,214 @@
-# 🏎️ بازی ماشین سه‌لاینه برای Google Colab
-# بدون Pygame
-
-from IPython.display import HTML, display
-import base64
-
-html = r'''
 <!DOCTYPE html>
-<html>
+<html lang="fa">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏎️ Car Racing</title>
 
 <style>
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
 body {
-    margin: 0;
-    background: #111;
-    display: flex;
-    justify-content: center;
-    font-family: Arial;
+  margin: 0;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: Arial;
 }
 
 #game {
-    width: 400px;
-    height: 650px;
-    position: relative;
-    overflow: hidden;
-    background: #168a3c;
-    border: 4px solid white;
+  position: relative;
+  width: 400px;
+  height: 700px;
+  overflow: hidden;
+  border: 4px solid white;
+  background: #159447;
 }
 
 #road {
-    position: absolute;
-    left: 50px;
-    width: 300px;
-    height: 100%;
-    background: #444;
+  position: absolute;
+  left: 50px;
+  width: 300px;
+  height: 100%;
+  background: #3c3c3c;
 }
 
+/* خطوط جاده */
 .line {
-    position: absolute;
-    width: 6px;
-    height: 45px;
-    background: white;
+  position: absolute;
+  width: 6px;
+  height: 45px;
+  background: white;
 }
 
-#line1 {
-    left: 197px;
+#line1 { left: 147px; }
+#line2 { left: 247px; }
+
+/* ماشین */
+.car {
+  position: absolute;
+  width: 54px;
+  height: 92px;
+  border-radius: 15px 15px 10px 10px;
 }
 
-#line2 {
-    left: 297px;
+/* بدنه */
+.car-body {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 5px rgba(255,255,255,.5),
+              3px 5px 8px rgba(0,0,0,.5);
 }
 
+/* شیشه جلو */
+.windshield {
+  position: absolute;
+  width: 34px;
+  height: 27px;
+  left: 10px;
+  top: 13px;
+  background: linear-gradient(#dff8ff, #6ba8c5);
+  border-radius: 8px 8px 4px 4px;
+  border: 2px solid rgba(0,0,0,.35);
+}
+
+/* شیشه عقب */
+.back-window {
+  position: absolute;
+  width: 32px;
+  height: 17px;
+  left: 11px;
+  bottom: 14px;
+  background: #5990a5;
+  border-radius: 4px;
+}
+
+/* چرخ‌ها */
+.wheel {
+  position: absolute;
+  width: 10px;
+  height: 25px;
+  background: #111;
+  border-radius: 5px;
+}
+
+.w1 {
+  left: -5px;
+  top: 18px;
+}
+
+.w2 {
+  right: -5px;
+  top: 18px;
+}
+
+.w3 {
+  left: -5px;
+  bottom: 18px;
+}
+
+.w4 {
+  right: -5px;
+  bottom: 18px;
+}
+
+/* چراغ */
+.light {
+  position: absolute;
+  width: 10px;
+  height: 7px;
+  background: #fff7a0;
+  border-radius: 3px;
+  top: 5px;
+}
+
+.l1 { left: 8px; }
+.l2 { right: 8px; }
+
+/* ماشین بازیکن */
 #player {
-    position: absolute;
-    width: 50px;
-    height: 85px;
-    background: #168cff;
-    border-radius: 12px;
-    bottom: 35px;
-    left: 175px;
-    z-index: 10;
+  left: 173px;
+  bottom: 35px;
+  z-index: 10;
 }
 
+.player-body {
+  background: linear-gradient(
+    90deg,
+    #075fc4,
+    #168cff,
+    #075fc4
+  );
+}
+
+/* دشمن‌ها */
 .enemy {
-    position: absolute;
-    width: 50px;
-    height: 85px;
-    border-radius: 12px;
-    top: -100px;
+  top: -120px;
+  z-index: 5;
 }
 
+/* امتیاز */
 #score {
-    position: absolute;
-    z-index: 20;
-    top: 10px;
-    left: 15px;
-    color: white;
-    font-size: 22px;
-    font-weight: bold;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 20;
+  color: white;
+  font-size: 22px;
+  font-weight: bold;
+  text-shadow: 2px 2px 3px black;
 }
 
-#gameover {
-    display: none;
-    position: absolute;
-    inset: 0;
-    z-index: 50;
-    background: rgba(0,0,0,.85);
-    color: white;
-    text-align: center;
-    padding-top: 220px;
+/* پایان */
+#gameOver {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0,0,0,.85);
+  color: white;
+  text-align: center;
+  padding-top: 220px;
 }
 
-#gameover h1 {
-    color: red;
-    font-size: 42px;
+#gameOver h1 {
+  color: red;
+  font-size: 45px;
 }
 
 button {
-    padding: 12px 22px;
-    font-size: 20px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
+  padding: 14px 25px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
 }
 
 #controls {
-    position: absolute;
-    bottom: 10px;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    z-index: 30;
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  z-index: 30;
 }
 
 .control {
-    margin: 0 15px;
-    background: white;
+  margin: 0 15px;
+  background: rgba(255,255,255,.75);
+  font-size: 28px;
+}
+
+@media (min-width: 700px) {
+  #controls {
+    display: none;
+  }
 }
 </style>
 </head>
@@ -124,297 +217,349 @@ button {
 
 <div id="game">
 
-    <div id="road"></div>
+  <div id="road"></div>
 
-    <div id="line1" class="line"></div>
-    <div id="line2" class="line"></div>
+  <div id="line1" class="line"></div>
+  <div id="line2" class="line"></div>
 
-    <div id="score">امتیاز: 0</div>
+  <div id="score">🏆 امتیاز: 0</div>
 
-    <div id="player"></div>
+  <!-- ماشین بازیکن -->
+  <div id="player" class="car">
 
-    <div id="gameover">
-        <h1>GAME OVER</h1>
-        <p id="finalScore"></p>
-        <button onclick="restart()">🔄 دوباره</button>
-    </div>
+    <div class="car-body player-body"></div>
 
-    <div id="controls">
-        <button class="control"
-                onclick="left()">⬅️</button>
+    <div class="windshield"></div>
+    <div class="back-window"></div>
 
-        <button class="control"
-                onclick="right()">➡️</button>
-    </div>
+    <div class="wheel w1"></div>
+    <div class="wheel w2"></div>
+    <div class="wheel w3"></div>
+    <div class="wheel w4"></div>
+
+    <div class="light l1"></div>
+    <div class="light l2"></div>
+
+  </div>
+
+  <!-- Game Over -->
+  <div id="gameOver">
+
+    <h1>GAME OVER</h1>
+
+    <p id="finalScore"></p>
+
+    <button onclick="restartGame()">
+      🔄 دوباره بازی کن
+    </button>
+
+  </div>
+
+  <!-- موبایل -->
+  <div id="controls">
+
+    <button class="control" onclick="moveLeft()">
+      ⬅️
+    </button>
+
+    <button class="control" onclick="moveRight()">
+      ➡️
+    </button>
+
+  </div>
 
 </div>
 
-
 <script>
 
-const player =
-    document.getElementById("player");
-
-const game =
-    document.getElementById("game");
+const game = document.getElementById("game");
+const player = document.getElementById("player");
 
 const scoreText =
-    document.getElementById("score");
+  document.getElementById("score");
 
-const gameover =
-    document.getElementById("gameover");
+const gameOver =
+  document.getEl
+    ementById("gameOver");
 
 const finalScore =
-    document.getElementById("finalScore");
+  document.getElementById("finalScore");
 
 const lanes = [100, 200, 300];
 
-let lane = 1;
+let playerLane = 1;
+let enemies = [];
 let score = 0;
 let speed = 5;
-let enemies = [];
 let running = true;
 let lastTime = 0;
-let spawnTime = 0;
+let enemyTimer = 0;
 let lineY = 0;
 
 
+/* حرکت بازیکن */
+
 function updatePlayer() {
 
-    player.style.left =
-        (lanes[lane] - 25) + "px";
+  player.style.left =
+    (lanes[playerLane] - 27) + "px";
 }
 
 
-function left() {
+function moveLeft() {
 
-    if (!running) return;
+  if (!running) return;
 
-    if (lane > 0) {
-        lane--;
-        updatePlayer();
-    }
+  if (playerLane > 0) {
+    playerLane--;
+    updatePlayer();
+  }
 }
 
 
-function right() {
+function moveRight() {
 
-    if (!running) return;
+  if (!running) return;
 
-    if (lane < 2) {
-        lane++;
-        updatePlayer();
-    }
+  if (playerLane < 2) {
+    playerLane++;
+    updatePlayer();
+  }
 }
 
 
-/* کنترل کیبورد */
+/* کیبورد */
 
-document.addEventListener("keydown", function(e) {
+document.addEventListener(
+  "keydown",
+  function(e) {
 
-    if (e.key === "ArrowLeft") {
-        left();
-    }
+    if (e.key === "ArrowLeft")
+      moveLeft();
 
-    if (e.key === "ArrowRight") {
-        right();
-    }
+    if (e.key === "ArrowRight")
+      moveRight();
 
-});
+  }
+);
 
 
-/* ساخت ماشین */
+/* ساخت ماشین دشمن */
 
 function createEnemy() {
 
-    let enemyLane =
-        Math.floor(Math.random() * 3);
+  const lane =
+    Math.floor(Math.random() * 3);
 
-    let enemy =
-        document.createElement("div");
+  const enemy =
+    document.createElement("div");
 
-    enemy.className = "enemy";
+  enemy.className = "enemy car";
 
-    enemy.style.left =
-        (lanes[enemyLane] - 25) + "px";
+  enemy.style.left =
+    (lanes[lane] - 27) + "px";
 
-    enemy.style.background =
-        ["red","yellow","purple","orange"]
-        [Math.floor(Math.random() * 4)];
+  enemy.style.top = "-120px";
 
-    enemy.style.top = "-100px";
+  const colors = [
+    "linear-gradient(90deg,#9b0000,#ff3030,#9b0000)",
+    "linear-gradient(90deg,#b58b00,#ffe12b,#b58b00)",
+    "linear-gradient(90deg,#541080,#a833ff,#541080)",
+    "linear-gradient(90deg,#b33d00,#ff761f,#b33d00)"
+  ];
 
-    game.appendChild(enemy);
+  enemy.innerHTML = `
 
-    enemies.push({
-        element: enemy,
-        lane: enemyLane,
-        y: -100
-    });
+    <div class="car-body"
+         style="background:${colors[
+           Math.floor(Math.random()*colors.length)
+         ]}">
+    </div>
+
+    <div class="windshield"></div>
+
+    <div class="wheel w1"></div>
+    <div class="wheel w2"></div>
+    <div class="wheel w3"></div>
+    <div class="wheel w4"></div>
+
+    <div class="light l1"></div>
+    <div class="light l2"></div>
+  `;
+
+  game.appendChild(enemy);
+
+  enemies.push({
+    element: enemy,
+    lane: lane,
+    y: -120
+  });
 }
 
 
 /* برخورد */
 
-function collision(a, b) {
+function collision(a,b) {
 
-    let A = a.getBoundingClientRect();
-    let B = b.getBoundingClientRect();
+  const A =
+    a.getBoundingClientRect();
 
-    return !(
-        A.right < B.left ||
-        A.left > B.right ||
-        A.bottom < B.top ||
-        A.top > B.bottom
-    );
+  const B =
+    b.getBoundingClientRect();
+
+  return !(
+    A.right < B.left ||
+    A.left > B.right ||
+    A.bottom < B.top ||
+    A.top > B.bottom
+  );
 }
 
 
-/* پایان */
+/* پایان بازی */
 
-function gameOver() {
+function endGame() {
 
-    running = f
-  alse;
+  running = false;
 
-    finalScore.innerText =
-        "امتیاز شما: " + score;
+  finalScore.textContent =
+    "🏆 امتیاز شما: " + score;
 
-    gameover.style.display = "block";
+  gameOver.style.display =
+    "block";
 }
 
 
-/* دوباره */
+/* شروع دوباره */
 
-function restart() {
+function restartGame() {
 
-    enemies.forEach(e => {
-        e.element.remove();
+  enemies.forEach(e =>
+    e.element.remove()
+  );
+
+  enemies = [];
+
+  score = 0;
+  speed = 5;
+  playerLane = 1;
+  enemyTimer = 0;
+
+  updatePlayer();
+
+  scoreText.textContent =
+    "🏆 امتیاز: 0";
+
+  gameOver.style.display =
+    "none";
+
+  running = true;
+
+  lastTime =
+    performance.now();
+
+  requestAnimationFrame(gameLoop);
+}
+
+
+/* حلقه بازی */
+
+function gameLoop(time) {
+
+  if (!running) return;
+
+  const delta =
+    time - lastTime;
+
+  lastTime = time;
+
+
+  /* حرکت خطوط */
+
+  lineY += speed;
+
+  if (lineY > 60)
+    lineY = 0;
+
+  document.getElementById("line1")
+    .style.top = lineY + "px";
+
+  document.getElementById("line2")
+    .style.top = lineY + "px";
+
+
+  /* دشمن */
+
+  enemyTimer += delta;
+
+  if (enemyTimer > 850) {
+
+    createEnemy();
+
+    enemyTimer = 0;
+  }
+
+
+  /* حرکت دشمن */
+
+  for (const enemy of enemies) {
+
+    enemy.y +=
+      speed * delta / 16;
+
+    enemy.element.style.top =
+      enemy.y + "px";
+
+    if (
+      enemy.lane === playerLane &&
+      collision(
+        player,
+        enemy.element
+      )
+    ) {
+
+      endGame();
+      return;
+    }
+  }
+
+
+  /* حذف ماشین‌ها */
+
+  enemies =
+    enemies.filter(enemy => {
+
+      if (enemy.y > 720) {
+
+        enemy.element.remove();
+
+        score++;
+
+        scoreText.textContent =
+          "🏆 امتیاز: " + score;
+
+        if (score % 10 === 0)
+          speed += 0.5;
+
+        return false;
+      }
+
+      return true;
     });
 
-    enemies = [];
 
-    score = 0;
-    speed = 5;
-    lane = 1;
-    spawnTime = 0;
-
-    updatePlayer();
-
-    scoreText.innerText =
-        "امتیاز: 0";
-
-    gameover.style.display =
-        "none";
-
-    running = true;
-
-    lastTime =
-        performance.now();
-
-    requestAnimationFrame(loop);
-}
-
-
-/* بازی */
-
-function loop(time) {
-
-    if (!running) return;
-
-    let delta =
-        time - lastTime;
-
-    lastTime = time;
-
-    /* حرکت خطوط */
-
-    lineY += speed;
-
-    if (lineY > 60)
-        lineY = 0;
-
-    document.getElementById("line1")
-        .style.top = lineY + "px";
-
-    document.getElementById("line2")
-        .style.top = lineY + "px";
-
-
-    /* ایجاد دشمن */
-
-    spawnTime += delta;
-
-    if (spawnTime > 900) {
-
-        createEnemy();
-
-        spawnTime = 0;
-    }
-
-
-    /* حرکت دشمن */
-
-    for (let enemy of enemies) {
-
-        enemy.y +=
-            speed * delta / 16;
-
-        enemy.element.style.top =
-            enemy.y + "px";
-
-
-        if (
-            enemy.lane === lane &&
-            collision(player, enemy.element)
-        ) {
-
-            gameOver();
-            return;
-        }
-    }
-
-
-    /* حذف دشمن */
-
-    enemies =
-        enemies.filter(enemy => {
-
-        if (enemy.y > 700) {
-
-            enemy.element.remove();
-
-            score++;
-
-            scoreText.innerText =
-                "امتیاز: " + score;
-
-            if (score % 10 === 0) {
-                speed += 0.5;
-            }
-
-            return false;
-        }
-
-        return true;
-    });
-
-
-    requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
 
 
 updatePlayer();
 
 lastTime =
-    performance.now();
+  performance.now();
 
-requestAnimationFrame(loop);
+requestAnimationFrame(gameLoop);
 
 </script>
 
 </body>
 </html>
-'''
-
-display(HTML(html))
