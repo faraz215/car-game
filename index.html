@@ -1,0 +1,420 @@
+# 🏎️ بازی ماشین سه‌لاینه برای Google Colab
+# بدون Pygame
+
+from IPython.display import HTML, display
+import base64
+
+html = r'''
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+body {
+    margin: 0;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    font-family: Arial;
+}
+
+#game {
+    width: 400px;
+    height: 650px;
+    position: relative;
+    overflow: hidden;
+    background: #168a3c;
+    border: 4px solid white;
+}
+
+#road {
+    position: absolute;
+    left: 50px;
+    width: 300px;
+    height: 100%;
+    background: #444;
+}
+
+.line {
+    position: absolute;
+    width: 6px;
+    height: 45px;
+    background: white;
+}
+
+#line1 {
+    left: 197px;
+}
+
+#line2 {
+    left: 297px;
+}
+
+#player {
+    position: absolute;
+    width: 50px;
+    height: 85px;
+    background: #168cff;
+    border-radius: 12px;
+    bottom: 35px;
+    left: 175px;
+    z-index: 10;
+}
+
+.enemy {
+    position: absolute;
+    width: 50px;
+    height: 85px;
+    border-radius: 12px;
+    top: -100px;
+}
+
+#score {
+    position: absolute;
+    z-index: 20;
+    top: 10px;
+    left: 15px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+#gameover {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0,0,0,.85);
+    color: white;
+    text-align: center;
+    padding-top: 220px;
+}
+
+#gameover h1 {
+    color: red;
+    font-size: 42px;
+}
+
+button {
+    padding: 12px 22px;
+    font-size: 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#controls {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    z-index: 30;
+}
+
+.control {
+    margin: 0 15px;
+    background: white;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <div id="road"></div>
+
+    <div id="line1" class="line"></div>
+    <div id="line2" class="line"></div>
+
+    <div id="score">امتیاز: 0</div>
+
+    <div id="player"></div>
+
+    <div id="gameover">
+        <h1>GAME OVER</h1>
+        <p id="finalScore"></p>
+        <button onclick="restart()">🔄 دوباره</button>
+    </div>
+
+    <div id="controls">
+        <button class="control"
+                onclick="left()">⬅️</button>
+
+        <button class="control"
+                onclick="right()">➡️</button>
+    </div>
+
+</div>
+
+
+<script>
+
+const player =
+    document.getElementById("player");
+
+const game =
+    document.getElementById("game");
+
+const scoreText =
+    document.getElementById("score");
+
+const gameover =
+    document.getElementById("gameover");
+
+const finalScore =
+    document.getElementById("finalScore");
+
+const lanes = [100, 200, 300];
+
+let lane = 1;
+let score = 0;
+let speed = 5;
+let enemies = [];
+let running = true;
+let lastTime = 0;
+let spawnTime = 0;
+let lineY = 0;
+
+
+function updatePlayer() {
+
+    player.style.left =
+        (lanes[lane] - 25) + "px";
+}
+
+
+function left() {
+
+    if (!running) return;
+
+    if (lane > 0) {
+        lane--;
+        updatePlayer();
+    }
+}
+
+
+function right() {
+
+    if (!running) return;
+
+    if (lane < 2) {
+        lane++;
+        updatePlayer();
+    }
+}
+
+
+/* کنترل کیبورد */
+
+document.addEventListener("keydown", function(e) {
+
+    if (e.key === "ArrowLeft") {
+        left();
+    }
+
+    if (e.key === "ArrowRight") {
+        right();
+    }
+
+});
+
+
+/* ساخت ماشین */
+
+function createEnemy() {
+
+    let enemyLane =
+        Math.floor(Math.random() * 3);
+
+    let enemy =
+        document.createElement("div");
+
+    enemy.className = "enemy";
+
+    enemy.style.left =
+        (lanes[enemyLane] - 25) + "px";
+
+    enemy.style.background =
+        ["red","yellow","purple","orange"]
+        [Math.floor(Math.random() * 4)];
+
+    enemy.style.top = "-100px";
+
+    game.appendChild(enemy);
+
+    enemies.push({
+        element: enemy,
+        lane: enemyLane,
+        y: -100
+    });
+}
+
+
+/* برخورد */
+
+function collision(a, b) {
+
+    let A = a.getBoundingClientRect();
+    let B = b.getBoundingClientRect();
+
+    return !(
+        A.right < B.left ||
+        A.left > B.right ||
+        A.bottom < B.top ||
+        A.top > B.bottom
+    );
+}
+
+
+/* پایان */
+
+function gameOver() {
+
+    running = f
+  alse;
+
+    finalScore.innerText =
+        "امتیاز شما: " + score;
+
+    gameover.style.display = "block";
+}
+
+
+/* دوباره */
+
+function restart() {
+
+    enemies.forEach(e => {
+        e.element.remove();
+    });
+
+    enemies = [];
+
+    score = 0;
+    speed = 5;
+    lane = 1;
+    spawnTime = 0;
+
+    updatePlayer();
+
+    scoreText.innerText =
+        "امتیاز: 0";
+
+    gameover.style.display =
+        "none";
+
+    running = true;
+
+    lastTime =
+        performance.now();
+
+    requestAnimationFrame(loop);
+}
+
+
+/* بازی */
+
+function loop(time) {
+
+    if (!running) return;
+
+    let delta =
+        time - lastTime;
+
+    lastTime = time;
+
+    /* حرکت خطوط */
+
+    lineY += speed;
+
+    if (lineY > 60)
+        lineY = 0;
+
+    document.getElementById("line1")
+        .style.top = lineY + "px";
+
+    document.getElementById("line2")
+        .style.top = lineY + "px";
+
+
+    /* ایجاد دشمن */
+
+    spawnTime += delta;
+
+    if (spawnTime > 900) {
+
+        createEnemy();
+
+        spawnTime = 0;
+    }
+
+
+    /* حرکت دشمن */
+
+    for (let enemy of enemies) {
+
+        enemy.y +=
+            speed * delta / 16;
+
+        enemy.element.style.top =
+            enemy.y + "px";
+
+
+        if (
+            enemy.lane === lane &&
+            collision(player, enemy.element)
+        ) {
+
+            gameOver();
+            return;
+        }
+    }
+
+
+    /* حذف دشمن */
+
+    enemies =
+        enemies.filter(enemy => {
+
+        if (enemy.y > 700) {
+
+            enemy.element.remove();
+
+            score++;
+
+            scoreText.innerText =
+                "امتیاز: " + score;
+
+            if (score % 10 === 0) {
+                speed += 0.5;
+            }
+
+            return false;
+        }
+
+        return true;
+    });
+
+
+    requestAnimationFrame(loop);
+}
+
+
+updatePlayer();
+
+lastTime =
+    performance.now();
+
+requestAnimationFrame(loop);
+
+</script>
+
+</body>
+</html>
+'''
+
+display(HTML(html))
