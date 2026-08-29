@@ -688,3 +688,404 @@ requestAnimationFrame(gameLoop);
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>بازی ماشین لمسی</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      touch-action: none;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #222;
+      font-family: Arial, sans-serif;
+    }
+
+    /* جاده */
+    #road {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          #333 0px,
+          #333 80px,
+          #444 80px,
+          #444 160px
+        );
+    }
+
+    /* خط وسط جاده */
+    #road::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      transform: translateX(-50%);
+      background: repeating-linear-gradient(
+        to bottom,
+        white 0px,
+        white 60px,
+        transparent 60px,
+        transparent 120px
+      );
+      opacity: 0.8;
+    }
+
+    /* ماشین */
+    #car {
+      position: absolute;
+      width: 64px;
+      height: 105px;
+      left: 50%;
+      top: 65%;
+      transform: translate(-50%, -50%);
+      background: #e00000;
+      border-radius: 18px;
+      border: 3px solid #111;
+      z-index: 5;
+      box-shadow: 0 5px 15px #000;
+    }
+
+    /* شیشه ماشین */
+    #car::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 12px;
+      width: 38px;
+      height: 30px;
+      background: #63c7ff;
+      border-radius: 10px;
+      border: 2px solid #111;
+    }
+
+    /* چراغ‌ها */
+    #car::after {
+      content: "💡  💡";
+      position: absolute;
+      left: 4px;
+      bottom: 5px;
+      font-size: 13px;
+    }
+
+    /* چرخ‌ها */
+    .wheel {
+      position: absolute;
+      width: 12px;
+      height: 27px;
+      background: #111;
+      border-radius: 5px;
+    }
+
+    .w1 {
+      left: -9px;
+      top: 15px;
+    }
+
+    .w2 {
+      right: -9px;
+      top: 15px;
+    }
+
+    .w3 {
+      left: -9px;
+      bottom: 15px;
+    }
+
+    .w4 {
+      right: -9px;
+      bottom: 15px;
+    }
+
+    /* دکمه‌ها */
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 20;
+    }
+
+    .side {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 70px;
+      height: 70px;
+      border: none;
+      border-radius: 20px;
+      background: #ffffffcc;
+      font-size: 32px;
+      box-shadow: 0 5px 10px #0008;
+    }
+
+    .btn:active {
+      transform: scale(0.9);
+      background: white;
+    }
+
+    #speed {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      padding: 10px 15px;
+      color: white;
+      background: #0009;
+      border-radius: 12px;
+      font-size: 18px;
+      z-index: 30;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="road">
+
+    <div id="speed">
+      🚗 سرعت: <span id="speedNumber">0</span>
+    </div>
+
+    <div id="car">
+      <div class="wheel w1"></div>
+      <div class="wheel w2"></div>
+      <div class="wheel w3"></div>
+      <div class="wheel w4"></div>
+    </div>
+
+  </div>
+
+  <!-- کنترل‌های لمسی -->
+  <div id="controls">
+
+    <div class="side">
+      <button class="btn" id="left">⬅️</button>
+      <button class="btn" id="right">➡️</button>
+    </div>
+
+    <div class="side">
+      <button class="btn" id="brake">⬇️</button>
+      <button class="btn" id="gas">⬆️</button>
+    </div>
+
+  </div>
+
+<script>
+
+  const car = document.getElementById("car");
+  const speedNumber = document.getElementById("speedNumber");
+
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight * 0.65;
+
+  let speed = 0;
+
+  const keys = {
+    left: false,
+    right: false,
+    gas: false,
+    brake: false
+  };
+
+  /* کنترل لمسی */
+  function touchButton(id, key) {
+
+    const button = document.getElementById(id);
+
+    button.addEventListener("touchstart", function(e) {
+      e.preventDefault();
+      keys[key] =
+        true;
+    });
+
+    button.addEventListener("touchend", function(e) {
+      e.preventDefault();
+      keys[key] = false;
+    });
+
+    button.addEventListener("touchcancel", function(e) {
+      e.preventDefault();
+      keys[key] = false;
+    });
+
+    /* برای کامپیوتر هم کار کند */
+    button.addEventListener("mousedown", function() {
+      keys[key] = true;
+    });
+
+    button.addEventListener("mouseup", function() {
+      keys[key] = false;
+    });
+
+    button.addEventListener("mouseleave", function() {
+      keys[key] = false;
+    });
+  }
+
+  touchButton("left", "left");
+  touchButton("right", "right");
+  touchButton("gas", "gas");
+  touchButton("brake", "brake");
+
+
+  /* حرکت ماشین */
+  function gameLoop() {
+
+    /* گاز */
+    if (keys.gas) {
+      speed += 0.25;
+    }
+
+    /* ترمز */
+    if (keys.brake) {
+      speed -= 0.5;
+    }
+
+    /* اگر هیچ کاری نکردیم، آرام شود */
+    if (!keys.gas && !keys.brake) {
+      speed *= 0.97;
+    }
+
+    /* محدود کردن سرعت */
+    speed = Math.max(-5, Math.min(10, speed));
+
+    /* فرمان */
+    if (keys.left) {
+      x -= 5;
+    }
+
+    if (keys.right) {
+      x += 5;
+    }
+
+    /* حرکت جلو و عقب */
+    y -= speed;
+
+    /* محدودیت صفحه */
+    x = Math.max(40, Math.min(window.innerWidth - 40, x));
+
+    y = Math.max(60, Math.min(window.innerHeight - 60, y));
+
+    /* اعمال موقعیت */
+    car.style.left = x + "px";
+    car.style.top = y + "px";
+
+    /* نمایش سرعت */
+    speedNumber.textContent = Math.round(Math.abs(speed) * 10);
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+
+</script>
+
+</body>
+</html>
+true;
+    });
+
+    button.addEventListener("touchend", function(e) {
+      e.preventDefault();
+      keys[key] = false;
+    });
+
+    button.addEventListener("touchcancel", function(e) {
+      e.preventDefault();
+      keys[key] = false;
+    });
+
+    /* برای کامپیوتر هم کار کند */
+    button.addEventListener("mousedown", function() {
+      keys[key] = true;
+    });
+
+    button.addEventListener("mouseup", function() {
+      keys[key] = false;
+    });
+
+    button.addEventListener("mouseleave", function() {
+      keys[key] = false;
+    });
+  }
+
+  touchButton("left", "left");
+  touchButton("right", "right");
+  touchButton("gas", "gas");
+  touchButton("brake", "brake");
+
+
+  /* حرکت ماشین */
+  function gameLoop() {
+
+    /* گاز */
+    if (keys.gas) {
+      speed += 0.25;
+    }
+
+    /* ترمز */
+    if (keys.brake) {
+      speed -= 0.5;
+    }
+
+    /* اگر هیچ کاری نکردیم، آرام شود */
+    if (!keys.gas && !keys.brake) {
+      speed *= 0.97;
+    }
+
+    /* محدود کردن سرعت */
+    speed = Math.max(-5, Math.min(10, speed));
+
+    /* فرمان */
+    if (keys.left) {
+      x -= 5;
+    }
+
+    if (keys.right) {
+      x += 5;
+    }
+
+    /* حرکت جلو و عقب */
+    y -= speed;
+
+    /* محدودیت صفحه */
+    x = Math.max(40, Math.min(window.innerWidth - 40, x));
+
+    y = Math.max(60, Math.min(window.innerHeight - 60, y));
+
+    /* اعمال موقعیت */
+    car.style.left = x + "px";
+    car.style.top = y + "px";
+
+    /* نمایش سرعت */
+    speedNumber.textContent = Math.round(Math.abs(speed) * 10);
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+
+</script>
+
+</body>
+</html>
